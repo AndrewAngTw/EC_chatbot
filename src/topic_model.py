@@ -1,29 +1,45 @@
 import pandas as pd
-from sklearn.feature_extraction.text import CountVectorizer
-from sklearn.decomposition import LatentDirichletAllocation
-from preprocess import load_data, preprocess
+from sklearn.model_selection import train_test_split
+from sklearn.feature_extraction.text import TfidfVectorizer
+from sklearn.linear_model import LogisticRegression
+from sklearn.metrics import classification_report
+import joblib
 
-# Load and preprocess
-df = load_data("../data/chat_data.xlsx")
-df = preprocess(df)
+def train_classifier():
+    # Load labeled documents
+    df = pd.read_excel("./data/labeled_docs.xlsx")
 
-# Vectorize
-vectorizer = CountVectorizer(stop_words='english', max_features=1000)
-X = vectorizer.fit_transform(df['cleaned_message'])
+    # Remove empty or NaN text entries
+    df = df.dropna(subset=["text"])
+    df = df[df["text"].str.strip() != ""]
 
-# Fit LDA
-lda = LatentDirichletAllocation(n_components=5, random_state=42)
-lda.fit(X)
+    # X = text, y = topic label (string)
+    X = df["text"]
+    y = df["label"] 
 
-# Assign topics to each message
-topic_values = lda.transform(X)
-df['Topic'] = topic_values.argmax(axis=1)
+    # Split into train/test sets
+    X_train, X_test, y_train, y_test = train_test_split(
+        X, y, test_size=0.2, random_state=42
+    )
 
-# Show top words per topic
-words = vectorizer.get_feature_names_out()
-for idx, topic in enumerate(lda.components_):
-    print(f"Topic {idx+1}: {[words[i] for i in topic.argsort()[-10:]]}")
+    # Convert text → TF-IDF features
+    vectorizer = TfidfVectorizer(stop_words="english", max_features=5000)
+    X_train_vec = vectorizer.fit_transform(X_train)
+    X_test_vec = vectorizer.transform(X_test)
 
-# Save results
-df.to_excel("../data/chat_data_with_topics.xlsx", index=False)
+    # Train classifier
+    clf = LogisticRegression(max_iter=1000)
+    clf.fit(X_train_vec, y_train)  
 
+    # Evaluate
+    preds = clf.predict(X_test_vec)
+    print("Classification Report:\n")
+    print(classification_report(y_test, preds))
+
+    # Save model + vectorizer
+    joblib.dump(clf, "./data/classifier.pkl")
+    joblib.dump(vectorizer, "./data/vectorizer.pkl")
+    print("Classifier and vectorizer saved to ./data/")
+
+if __name__ == "__main__":
+    train_classifier()
