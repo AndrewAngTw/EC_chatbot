@@ -57,5 +57,5 @@ def load_documents():
 if __name__ == "__main__":
     df = load_documents()
     df.to_excel("./data/labeled_docs.xlsx", index=False)
-    print(f"✅ Saved {len(df)} labeled documents to data/labeled_docs.xlsx")
+    print(f"Saved {len(df)} labeled documents to data/labeled_docs.xlsx")
 

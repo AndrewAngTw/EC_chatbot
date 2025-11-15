@@ -17,17 +17,13 @@ def train_classifier():
     X = df["text"]
     y = df["label"]
 
-    # Check if stratify is possible (all classes >= 2 samples)
     min_class_size = y.value_counts().min()
-    use_stratify = len(y.unique()) > 1 and min_class_size > 1
 
-    if use_stratify:
-        print("Using stratified split ✅")
+    if len(y.unique()) > 1 and min_class_size > 1:
         X_train, X_test, y_train, y_test = train_test_split(
             X, y, test_size=0.2, random_state=42, stratify=y
         )
     else:
-        print("⚠️ Not using stratify (some classes have <2 samples)")
         X_train, X_test, y_train, y_test = train_test_split(
             X, y, test_size=0.2, random_state=42
         )
@@ -47,12 +43,12 @@ def train_classifier():
         print("Classification Report:")
         print(classification_report(y_test, preds))
     else:
-        print("⚠️ Only one class found in data — skipping evaluation")
+        print("Only one class found in data — skipping evaluation")
 
     # Save model + vectorizer
     joblib.dump(clf, "./data/classifier.pkl")
     joblib.dump(vectorizer, "./data/vectorizer.pkl")
-    print("✅ Saved classifier.pkl and vectorizer.pkl")
+    print("Saved classifier.pkl and vectorizer.pkl")
 
 
 
@@ -92,7 +88,7 @@ def classify_chat_data():
     )
 
     chat_df.to_excel("./data/chat_data_with_topics.xlsx", index=False)
-    print("✅ Updated chat_data_with_topics.xlsx")
+    print("Updated chat_data_with_topics.xlsx")
 
 if __name__ == "__main__":
     train_classifier()
